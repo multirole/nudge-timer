@@ -140,9 +140,9 @@ function resetTimer() {
   updateUI();
   
   // 테스트 로그 지우기
-  const logDiv = document.getElementById('phaseTestLog');
-  if (logDiv) {
-    logDiv.innerHTML = '';
+  const logContent = document.getElementById('testLogContent');
+  if (logContent) {
+    logContent.innerHTML = '';
   }
 }
 
@@ -231,7 +231,7 @@ document.getElementById('sub10min').addEventListener('click', function() { addMi
 
 // 테스트용 Phase 정보 출력 함수
 function logPhaseInfo(action) {
-  const logDiv = document.getElementById('phaseTestLog');
+  const logContent = document.getElementById('testLogContent');
   const t = timerState.totalDisplayedSeconds;
   const timer = getThreePhaseTourbillonTimer(t);
   const html = `
@@ -243,7 +243,23 @@ function logPhaseInfo(action) {
       <span class="text-gray-500">보정값: ${timer.correction.toFixed(4)}</span>
     </div>
   `;
-  logDiv.innerHTML += html;
+  logContent.innerHTML += html;
+}
+
+// 아코디언 토글 기능
+function toggleTestLog() {
+  const content = document.getElementById('testLogContent');
+  const toggle = document.getElementById('testLogToggle');
+  
+  if (content.style.display === 'none') {
+    content.style.display = 'block';
+    toggle.textContent = '▼';
+    toggle.style.transform = 'rotate(0deg)';
+  } else {
+    content.style.display = 'none';
+    toggle.textContent = '▶';
+    toggle.style.transform = 'rotate(-90deg)';
+  }
 }
 
 // Start 버튼에 테스트 로그 추가
