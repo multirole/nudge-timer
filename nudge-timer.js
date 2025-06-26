@@ -138,6 +138,12 @@ function resetTimer() {
   timerState.elapsed = 0;
   stopTimer();
   updateUI();
+  
+  // 테스트 로그 지우기
+  const logDiv = document.getElementById('phaseTestLog');
+  if (logDiv) {
+    logDiv.innerHTML = '';
+  }
 }
 
 // 드롭다운과 입력박스 연동 및 시간 설정 기능
