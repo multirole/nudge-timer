@@ -6,15 +6,25 @@
   <title>👉 Nudge Timer</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
 </head>
-<body class="bg-gradient-to-br from-blue-100 to-white min-h-screen flex flex-col items-center justify-center">
-  <div class="bg-white shadow-2xl rounded-2xl p-12 w-full max-w-xl border border-blue-100 relative">
-    <button id="helpBtn" class="absolute top-4 right-4 text-blue-400 hover:text-blue-600 text-2xl font-bold focus:outline-none" title="NudgeTimer란?">?</button>
-    <h1 class="text-3xl font-bold mb-6 text-center">Nudge Timer</h1>
-    <div class="mb-6 flex flex-col items-center">
+<body class="bg-gradient-to-br from-blue-100 to-white dark:from-gray-900 dark:to-gray-800 min-h-screen flex flex-col items-center justify-center transition-colors duration-300">
+  <div id="timerContainer" class="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-12 w-full max-w-2xl border border-blue-100 dark:border-gray-600 relative transform origin-center transition-all duration-300">
+    <!-- 넛지 타이머 토글 스위치 -->
+    <label class="absolute top-4 left-4 inline-flex items-center cursor-pointer z-10">
+      <input id="nudgeSwitch" type="checkbox" class="sr-only peer">
+      <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>
+    </label>
+    <button id="helpBtn" class="absolute top-4 right-4 text-blue-400 hover:text-blue-600 dark:text-blue-300 dark:hover:text-blue-200 text-2xl font-bold focus:outline-none transition-colors duration-200" title="NudgeTimer란?">?</button>
+    <h1 id="mainTitle" class="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-center text-gray-800 dark:text-white">Nudge Timer</h1>
+    <div class="mb-4 sm:mb-6 flex flex-col items-center">
       <div id="timerInputContainer" class="relative w-full flex flex-col items-center transition-all duration-300 ease-in-out">
         <div id="dropdownWrapper" class="flex justify-center w-full">
-          <select id="minutes" class="w-32 border rounded px-2 py-1 text-center mx-auto focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-300">
+          <select id="minutes" class="w-32 border rounded px-2 py-1 text-center mx-auto focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-300 bg-white dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300 dark:border-gray-600">
             <option value="custom">직접 입력</option>
             <option value="10">10</option>
             <option value="15">15</option>
@@ -30,31 +40,32 @@
           </select>
         </div>
         <div id="customInputWrapper" class="flex justify-center items-center w-full mt-2 transition-all duration-300" style="display:none;">
-          <input id="minuteInput" type="number" min="1" max="180" value="20" class="w-20 border rounded px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100 disabled:text-gray-500 transition-all duration-300" disabled />
-          <span id="minuteLabel" class="text-gray-500 ml-2">분</span>
+          <input id="minuteInput" type="number" min="1" max="180" value="20" class="w-20 border rounded px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:text-gray-500 dark:disabled:text-gray-400 transition-all duration-300 bg-white dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300 dark:border-gray-600" disabled />
+          <span id="minuteLabel" class="text-gray-500 dark:text-gray-400 ml-2">분</span>
         </div>
       </div>
     </div>
-    <div class="flex flex-col items-center mb-10">
-      <div id="bigTime" class="text-[8rem] font-extrabold tracking-widest text-gray-800 mb-8 transition-all duration-300 leading-none select-none">20:00</div>
-      <div class="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+    <div class="flex flex-col items-center mb-6 sm:mb-8 md:mb-10">
+      <div id="bigTime" class="text-[3rem] sm:text-[5rem] md:text-[6rem] lg:text-[8rem] font-extrabold tracking-widest mb-4 sm:mb-6 md:mb-8 transition-all duration-300 leading-none select-none">20:00</div>
+      <div class="w-full h-3 bg-gray-200 dark:bg-gray-600 rounded-full relative">
         <div id="progressBar" class="h-full bg-blue-500 transition-all duration-300" style="width:0%"></div>
+        <span id="progressTooltip" class="hidden absolute left-1/2 -translate-x-1/2 -top-8 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded shadow z-20 whitespace-nowrap pointer-events-none"></span>
       </div>
     </div>
-    <div class="flex justify-center gap-4 mb-6">
-      <button id="startBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow transition-all duration-200 disabled:opacity-50">Start</button>
-      <button id="pauseBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-full shadow transition-all duration-200 disabled:opacity-50">Pause</button>
-      <button id="resetBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-full shadow transition-all duration-200 disabled:opacity-50">Reset</button>
+    <div class="flex justify-center gap-2 sm:gap-4 mb-4 sm:mb-6">
+      <button id="startBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 sm:py-3 sm:px-6 md:px-8 rounded-full shadow transition-all duration-200 disabled:opacity-50 text-sm sm:text-base">Start</button>
+      <button id="pauseBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 sm:py-3 sm:px-6 md:px-8 rounded-full shadow transition-all duration-200 disabled:opacity-50 text-sm sm:text-base">Pause</button>
+      <button id="resetBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 sm:py-3 sm:px-6 md:px-8 rounded-full shadow transition-all duration-200 disabled:opacity-50 text-sm sm:text-base">Reset</button>
     </div>
-    <div class="flex justify-center gap-4 mb-2">
-      <button id="add1min" class="w-20 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-full transition-all duration-200">+1분</button>
-      <button id="add5min" class="w-20 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-full transition-all duration-200">+5분</button>
-      <button id="add10min" class="w-20 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-full transition-all duration-200">+10분</button>
+    <div class="flex justify-center gap-2 sm:gap-4 mb-2">
+      <button id="add1min" class="w-16 sm:w-20 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-full transition-all duration-200 text-xs sm:text-sm">+1분</button>
+      <button id="add5min" class="w-16 sm:w-20 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-full transition-all duration-200 text-xs sm:text-sm">+5분</button>
+      <button id="add10min" class="w-16 sm:w-20 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-full transition-all duration-200 text-xs sm:text-sm">+10분</button>
     </div>
-    <div class="flex justify-center gap-4 mb-2">
-      <button id="sub1min" class="w-20 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-4 rounded-full transition-all duration-200">-1분</button>
-      <button id="sub5min" class="w-20 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-4 rounded-full transition-all duration-200">-5분</button>
-      <button id="sub10min" class="w-20 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-4 rounded-full transition-all duration-200">-10분</button>
+    <div class="flex justify-center gap-2 sm:gap-4 mb-2">
+      <button id="sub1min" class="w-16 sm:w-20 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-full transition-all duration-200 text-xs sm:text-sm">-1분</button>
+      <button id="sub5min" class="w-16 sm:w-20 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-full transition-all duration-200 text-xs sm:text-sm">-5분</button>
+      <button id="sub10min" class="w-16 sm:w-20 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-full transition-all duration-200 text-xs sm:text-sm">-10분</button>
     </div>
     <div id="helpModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm transition-all duration-300 hidden">
       <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-fade-in flex flex-col items-center border border-blue-100">
@@ -70,16 +81,17 @@
         <p class="text-gray-400 text-sm text-center">이 타이머는 집중력 향상, 몰입, 시간 관리에 도움을 주기 위해 설계되었습니다.</p>
       </div>
     </div>
-    <div id="phaseTestLog" class="max-w-xl w-full mt-8 p-4 bg-gray-50 border border-dashed border-blue-200 rounded-xl text-xs text-gray-700 overflow-x-auto">
+    <div id="phaseTestLog" class="max-w-2xl w-full mt-4 sm:mt-6 md:mt-8 p-2 sm:p-4 bg-gray-50 dark:bg-gray-700 border border-dashed border-blue-200 dark:border-gray-500 rounded-xl text-xs text-gray-700 dark:text-gray-300 overflow-x-auto">
       <div class="flex items-center justify-between cursor-pointer" onclick="toggleTestLog()">
-        <span class="font-semibold text-blue-700">🧪 테스트 로그</span>
-        <span id="testLogToggle" class="text-blue-500 text-lg transition-transform duration-200">▶</span>
+        <span class="font-semibold text-blue-700 dark:text-blue-300">🧪 테스트 로그</span>
+        <span id="testLogToggle" class="text-blue-500 dark:text-blue-400 text-lg transition-transform duration-200">▶</span>
       </div>
-      <div id="testLogContent" class="mt-3 pt-3 border-t border-blue-200" style="display: none;">
+              <div id="testLogContent" class="mt-3 pt-3 border-t border-blue-200 dark:border-gray-500" style="display: none;">
         <!-- 로그 내용이 여기에 추가됩니다 -->
       </div>
     </div>
   </div>
+  <button id="darkModeBtn" class="fixed bottom-6 right-6 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 text-3xl font-bold focus:outline-none transition-colors duration-200 z-10 bg-white dark:bg-gray-800 rounded-full p-3 shadow-lg border border-gray-200 dark:border-gray-600" title="야간모드">🌙</button>
   <script src="nudge-timer.js"></script>
 </body>
 </html> 

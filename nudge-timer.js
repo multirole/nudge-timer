@@ -70,6 +70,7 @@ function getThreePhaseTourbillonTimer(totalDisplayedSeconds) {
 }
 
 let timerInterval = null;
+let isNudgeMode = localStorage.getItem('nudgeMode') === null ? true : localStorage.getItem('nudgeMode') === 'true';
 let timerState = {
   running: false,
   remaining: 20 * 60, // default 20:00
@@ -82,8 +83,45 @@ let timerState = {
 function updateUI() {
   // 진행바: 경과 시간 기준
   const percent = Math.min(100, (timerState.elapsed / timerState.totalDisplayedSeconds) * 100);
-  document.getElementById('bigTime').textContent = formatTime(timerState.remaining);
-  document.getElementById('progressBar').style.width = percent + '%';
+  const bigTimeElement = document.getElementById('bigTime');
+  const progressBarElement = document.getElementById('progressBar');
+  
+  bigTimeElement.textContent = formatTime(timerState.remaining);
+  progressBarElement.style.width = percent + '%';
+  
+  // 반응형 폰트 크기 조정 (창 크기에 따라 동적 조정)
+  const windowWidth = window.innerWidth;
+  let fontSize;
+  if (windowWidth < 640) { // sm
+    fontSize = '3rem';
+  } else if (windowWidth < 768) { // md
+    fontSize = '5rem';
+  } else if (windowWidth < 1024) { // lg
+    fontSize = '6rem';
+  } else {
+    fontSize = '8rem';
+  }
+  bigTimeElement.style.fontSize = fontSize;
+  
+  // 시간 경고 시스템: 1분 이하 또는 5% 이하일 때 빨간색으로 변경
+  const remainingMinutes = timerState.remaining / 60;
+  const remainingPercent = (timerState.remaining / timerState.totalDisplayedSeconds) * 100;
+  
+  if (remainingMinutes <= 1 || remainingPercent <= 5) {
+    bigTimeElement.style.color = '#dc2626'; // 빨간색
+    bigTimeElement.style.textShadow = '0 0 5px rgba(220, 38, 38, 0.2)'; // 글로우 효과 줄임
+    progressBarElement.style.backgroundColor = '#dc2626'; // 진행바도 빨간색으로
+  } else {
+    // 다크모드에 따른 기본 색상 설정
+    if (isDarkMode) {
+      bigTimeElement.style.color = '#ffffff'; // 다크모드에서는 흰색
+    } else {
+      bigTimeElement.style.color = '#1f2937'; // 라이트모드에서는 회색
+    }
+    bigTimeElement.style.textShadow = 'none';
+    progressBarElement.style.backgroundColor = '#3b82f6'; // 기본 파란색
+  }
+  
   document.getElementById('startBtn').disabled = timerState.running || timerState.remaining <= 0;
   document.getElementById('pauseBtn').disabled = !timerState.running;
   document.getElementById('resetBtn').disabled = timerState.remaining === timerState.totalDisplayedSeconds && !timerState.running;
@@ -95,9 +133,15 @@ function tick() {
     // 실제 시간 0.1초 경과 (더 부드러운 업데이트)
     timerState.elapsed += 0.1;
     
-    // 넛지 타이머를 사용하여 표시 시간 계산
-    const displayedTimeElapsed = timerState.timer.getDisplayedTime(timerState.elapsed);
-    const newRemaining = timerState.totalDisplayedSeconds - displayedTimeElapsed;
+    let newRemaining;
+    if (isNudgeMode) {
+      // 넛지 타이머를 사용하여 표시 시간 계산
+      const displayedTimeElapsed = timerState.timer.getDisplayedTime(timerState.elapsed);
+      newRemaining = timerState.totalDisplayedSeconds - displayedTimeElapsed;
+    } else {
+      // 일반 타이머: 실제 시간과 동일하게 진행
+      newRemaining = timerState.totalDisplayedSeconds - timerState.elapsed;
+    }
     
     // 남은 시간이 0 이하가 되면 타이머 종료
     if (newRemaining <= 0) {
@@ -134,7 +178,9 @@ function stopTimer() {
 function resetTimer() {
   timerState.remaining = timerState.originalDisplayedSeconds;
   timerState.totalDisplayedSeconds = timerState.originalDisplayedSeconds;
-  timerState.timer = getThreePhaseTourbillonTimer(timerState.originalDisplayedSeconds);
+  if (isNudgeMode) {
+    timerState.timer = getThreePhaseTourbillonTimer(timerState.originalDisplayedSeconds);
+  }
   timerState.elapsed = 0;
   stopTimer();
   updateUI();
@@ -169,7 +215,9 @@ minutesSelect.addEventListener('change', function() {
     timerState.totalDisplayedSeconds = min * 60;
     timerState.originalDisplayedSeconds = min * 60;
     timerState.remaining = min * 60;
-    timerState.timer = getThreePhaseTourbillonTimer(min * 60);
+    if (isNudgeMode) {
+      timerState.timer = getThreePhaseTourbillonTimer(min * 60);
+    }
     timerState.elapsed = 0;
   } else {
     // 입력박스와 라벨 숨기기
@@ -180,7 +228,9 @@ minutesSelect.addEventListener('change', function() {
     timerState.totalDisplayedSeconds = min * 60;
     timerState.originalDisplayedSeconds = min * 60;
     timerState.remaining = min * 60;
-    timerState.timer = getThreePhaseTourbillonTimer(min * 60);
+    if (isNudgeMode) {
+      timerState.timer = getThreePhaseTourbillonTimer(min * 60);
+    }
     timerState.elapsed = 0;
   }
   updateUI();
@@ -196,7 +246,9 @@ minuteInput.addEventListener('input', function() {
     timerState.totalDisplayedSeconds = min * 60;
     timerState.originalDisplayedSeconds = min * 60;
     timerState.remaining = min * 60;
-    timerState.timer = getThreePhaseTourbillonTimer(min * 60);
+    if (isNudgeMode) {
+      timerState.timer = getThreePhaseTourbillonTimer(min * 60);
+    }
     timerState.elapsed = 0;
     updateUI();
   }
@@ -217,9 +269,11 @@ function addMinutes(min) {
   const maxSec = 180 * 60;
   if (timerState.remaining > maxSec) timerState.remaining = maxSec;
   if (timerState.remaining < 0) timerState.remaining = 0;
-  // 남은 시간에 맞게 넛지 타이머 재계산 (원래 설정 시간은 보존)
+  // 남은 시간에 맞게 타이머 재계산 (원래 설정 시간은 보존)
   timerState.totalDisplayedSeconds = timerState.remaining + timerState.elapsed;
-  timerState.timer = getThreePhaseTourbillonTimer(timerState.totalDisplayedSeconds);
+  if (isNudgeMode) {
+    timerState.timer = getThreePhaseTourbillonTimer(timerState.totalDisplayedSeconds);
+  }
   updateUI();
 }
 document.getElementById('add1min').addEventListener('click', function() { addMinutes(1); });
@@ -233,17 +287,28 @@ document.getElementById('sub10min').addEventListener('click', function() { addMi
 function logPhaseInfo(action) {
   const logContent = document.getElementById('testLogContent');
   const t = timerState.totalDisplayedSeconds;
-  const timer = getThreePhaseTourbillonTimer(t);
-  const html = `
-    <div class="mb-2">
-      <b>[${action}]</b> 총 표시시간: <b>${Math.round(t/60)}분</b><br/>
-      Phase1: <span class="text-blue-700">${timer.phaseReal[0].toFixed(1)}s</span> (warp ${timer.warpFactors[0]}) |
-      Phase2: <span class="text-blue-700">${timer.phaseReal[1].toFixed(1)}s</span> (warp ${timer.warpFactors[1]}) |
-      Phase3: <span class="text-blue-700">${timer.phaseReal[2].toFixed(1)}s</span> (warp ${timer.warpFactors[2]})<br/>
-      <span class="text-gray-500">보정값: ${timer.correction.toFixed(4)}</span>
-    </div>
-  `;
-  logContent.innerHTML += html;
+  
+  if (isNudgeMode) {
+    const timer = getThreePhaseTourbillonTimer(t);
+    const html = `
+      <div class="mb-2">
+        <b>[${action}]</b> 총 표시시간: <b>${Math.round(t/60)}분</b> <span class="text-purple-600 dark:text-purple-400">(넛지 모드)</span><br/>
+        Phase1: <span class="text-blue-700">${timer.phaseReal[0].toFixed(1)}s</span> (warp ${timer.warpFactors[0]}) |
+        Phase2: <span class="text-blue-700">${timer.phaseReal[1].toFixed(1)}s</span> (warp ${timer.warpFactors[1]}) |
+        Phase3: <span class="text-blue-700">${timer.phaseReal[2].toFixed(1)}s</span> (warp ${timer.warpFactors[2]})<br/>
+        <span class="text-gray-500">보정값: ${timer.correction.toFixed(4)}</span>
+      </div>
+    `;
+    logContent.innerHTML += html;
+  } else {
+    const html = `
+      <div class="mb-2">
+        <b>[${action}]</b> 총 표시시간: <b>${Math.round(t/60)}분</b> <span class="text-gray-600 dark:text-gray-400">(일반 모드)</span><br/>
+        <span class="text-gray-500">실제 시간과 동일하게 진행됩니다.</span>
+      </div>
+    `;
+    logContent.innerHTML += html;
+  }
 }
 
 // 아코디언 토글 기능
@@ -286,10 +351,75 @@ document.getElementById('startBtn').addEventListener('click', startTimerWithLog)
 document.getElementById('pauseBtn').addEventListener('click', pauseTimer);
 document.getElementById('resetBtn').addEventListener('click', resetTimer);
 
+// 야간모드 토글 기능
+let isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+// 초기 야간모드 상태 적용
+function applyDarkMode() {
+  const darkModeBtn = document.getElementById('darkModeBtn');
+  if (!darkModeBtn) return;
+  
+  if (isDarkMode) {
+    document.documentElement.classList.add('dark');
+    darkModeBtn.textContent = '☀️';
+    darkModeBtn.title = '일반모드';
+  } else {
+    document.documentElement.classList.remove('dark');
+    darkModeBtn.textContent = '🌙';
+    darkModeBtn.title = '야간모드';
+  }
+}
+
+// 야간모드 토글
+function toggleDarkMode() {
+  isDarkMode = !isDarkMode;
+  localStorage.setItem('darkMode', isDarkMode);
+  applyDarkMode();
+  updateUI(); // UI 업데이트로 타이머 색상 변경
+}
+
+function applyNudgeMode() {
+  const nudgeSwitch = document.getElementById('nudgeSwitch');
+  const mainTitle = document.getElementById('mainTitle');
+  if (nudgeSwitch) nudgeSwitch.checked = isNudgeMode;
+  if (mainTitle) mainTitle.textContent = isNudgeMode ? 'Nudge Timer' : 'Timer';
+}
+
+function toggleNudgeModeBySwitch() {
+  isNudgeMode = !isNudgeMode;
+  localStorage.setItem('nudgeMode', isNudgeMode);
+  applyNudgeMode();
+  if (timerState.running) {
+    pauseTimer();
+    startTimer();
+  } else {
+    updateUI();
+  }
+}
+
 window.onload = function() {
   timerState.remaining = timerState.totalDisplayedSeconds;
   updateUI();
+  
+  // 야간모드 초기화
+  const darkModeBtn = document.getElementById('darkModeBtn');
+  if (darkModeBtn) {
+    darkModeBtn.addEventListener('click', toggleDarkMode);
+    applyDarkMode();
+  }
+
+  // 넛지 스위치 초기화
+  const nudgeSwitch = document.getElementById('nudgeSwitch');
+  if (nudgeSwitch) {
+    nudgeSwitch.addEventListener('change', toggleNudgeModeBySwitch);
+    applyNudgeMode();
+  }
 };
+
+// 창 크기 변경 시 반응형 업데이트
+window.addEventListener('resize', function() {
+  updateUI();
+});
 
 // 도움말 모달 동작
 const helpBtn = document.getElementById('helpBtn');
@@ -308,5 +438,37 @@ closeHelpModal.addEventListener('click', function() {
 helpModal.addEventListener('mousedown', function(e) {
   if (e.target === helpModal) {
     helpModal.classList.add('hidden');
+  }
+}); 
+
+// 진행바 툴팁 기능
+let progressTooltipInterval = null;
+window.addEventListener('DOMContentLoaded', function() {
+  const progressBar = document.getElementById('progressBar');
+  const progressBarWrapper = progressBar?.parentElement;
+  const progressTooltip = document.getElementById('progressTooltip');
+  function updateTooltip() {
+    const totalSec = timerState.totalDisplayedSeconds;
+    let elapsedSec;
+    if (isNudgeMode) {
+      elapsedSec = timerState.timer.getDisplayedTime(timerState.elapsed);
+    } else {
+      elapsedSec = timerState.elapsed;
+    }
+    progressTooltip.textContent = `총 시간: ${formatTime(totalSec)} / 경과: ${formatTime(elapsedSec)}`;
+  }
+  if (progressBarWrapper && progressTooltip) {
+    progressBarWrapper.addEventListener('mouseenter', function(e) {
+      updateTooltip();
+      progressTooltip.classList.remove('hidden');
+      progressTooltipInterval = setInterval(updateTooltip, 100);
+    });
+    progressBarWrapper.addEventListener('mouseleave', function(e) {
+      progressTooltip.classList.add('hidden');
+      if (progressTooltipInterval) {
+        clearInterval(progressTooltipInterval);
+        progressTooltipInterval = null;
+      }
+    });
   }
 }); 
