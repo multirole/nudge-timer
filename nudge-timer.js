@@ -1,4 +1,4 @@
-// Nudge Timer V2 로직 (단계별 활동 지원)
+// Nudge Timer Hybrid Logic
 
 function formatTime(sec) {
   const m = Math.floor(sec / 60);
@@ -37,7 +37,7 @@ function getThreePhaseTourbillonTimer(totalDisplayedSeconds) {
     return Math.min(displayed, totalDisplayedSeconds);
   }
 
-  return { getDisplayedTime };
+  return { warpFactors, phaseReal, correction, getDisplayedTime };
 }
 
 // --- 상태 관리 ---
@@ -45,45 +45,54 @@ let timerInterval = null;
 let isNudgeMode = localStorage.getItem('nudgeMode') === null ? true : localStorage.getItem('nudgeMode') === 'true';
 let isDarkMode = localStorage.getItem('darkMode') === 'true';
 
-// 기본 단계 데이터
-const defaultStages = [
-  { name: '설명 듣기', minutes: 5 },
-  { name: '만들기 활동', minutes: 10 },
-  { name: '정리하기', minutes: 5 }
-];
-
 let stages = [];
 try {
   const saved = localStorage.getItem('nudgeStages');
-  stages = saved ? JSON.parse(saved) : defaultStages;
+  if (saved) {
+    stages = JSON.parse(saved);
+  }
 } catch (e) {
-  stages = defaultStages;
+  stages = [];
 }
 
 let timerState = {
   running: false,
   elapsed: 0, // 실제 경과 시간(초)
-  totalDisplayedSeconds: 0,
+  totalDisplayedSeconds: 20 * 60, // 기본 20분
+  originalDisplayedSeconds: 20 * 60,
   timerCore: null,
   currentStageIndex: -1
 };
 
-// 단계 경계 계산
-let stageBoundaries = []; // 표시 시간 기준 누적 경계 (초)
+let stageBoundaries = []; // 단계 표시 시간 기준 누적 경계 (초)
 
-function initTimerState() {
-  timerState.totalDisplayedSeconds = stages.reduce((acc, stage) => acc + stage.minutes * 60, 0);
-  timerState.timerCore = getThreePhaseTourbillonTimer(timerState.totalDisplayedSeconds);
-  timerState.elapsed = 0;
-  timerState.currentStageIndex = -1;
-  timerState.running = false;
-  
-  let accumulated = 0;
+function recalcBoundaries() {
   stageBoundaries = [];
+  let accumulated = 0;
   stages.forEach(stage => {
     accumulated += stage.minutes * 60;
     stageBoundaries.push(accumulated);
   });
+}
+
+function initTimerState(fromInput = false) {
+  if (stages.length > 0) {
+    timerState.totalDisplayedSeconds = stages.reduce((acc, stage) => acc + stage.minutes * 60, 0);
+    recalcBoundaries();
+  } else {
+    // V1 단일 타이머 방식
+    if (!fromInput) {
+      const min = parseInt(document.getElementById('minuteInput').value, 10) || 20;
+      timerState.totalDisplayedSeconds = min * 60;
+    }
+    stageBoundaries = [];
+  }
+  
+  timerState.originalDisplayedSeconds = timerState.totalDisplayedSeconds;
+  timerState.timerCore = getThreePhaseTourbillonTimer(timerState.totalDisplayedSeconds);
+  timerState.elapsed = 0;
+  timerState.currentStageIndex = -1;
+  timerState.running = false;
   
   renderTrackFlags();
   updateUI();
@@ -96,76 +105,50 @@ function renderTrackFlags() {
   if (!container) return;
   container.innerHTML = '';
   
+  if (stages.length <= 1) return; // 단계가 없거나 1개면 마커 불필요
+
   const total = timerState.totalDisplayedSeconds;
   if (total <= 0) return;
 
-  // 마지막 단계의 깃발(100%)은 생략하거나 도착 지점으로 표현
   for (let i = 0; i < stageBoundaries.length - 1; i++) {
     const boundary = stageBoundaries[i];
     const percent = (boundary / total) * 100;
     
-    const flag = document.createElement('div');
-    flag.className = 'absolute top-0 flex flex-col items-center transform -translate-x-1/2 -translate-y-full pb-2';
-    flag.style.left = `${percent}%`;
-    flag.innerHTML = `
-      <div class="text-2xl filter drop-shadow-sm">🚩</div>
-      <div class="h-8 w-1 bg-gray-400 dark:bg-gray-500 rounded-full mt-1"></div>
-    `;
-    container.appendChild(flag);
+    const marker = document.createElement('div');
+    marker.className = 'absolute top-0 h-full w-0.5 bg-white opacity-60';
+    marker.style.left = `${percent}%`;
+    container.appendChild(marker);
   }
-  
-  // 도착 지점 (100%)
-  const finishFlag = document.createElement('div');
-  finishFlag.className = 'absolute top-0 flex flex-col items-center transform -translate-x-1/2 -translate-y-full pb-2';
-  finishFlag.style.left = `100%`;
-  finishFlag.innerHTML = `
-    <div class="text-2xl filter drop-shadow-sm">🏁</div>
-    <div class="h-8 w-1 bg-gray-400 dark:bg-gray-500 rounded-full mt-1"></div>
-  `;
-  container.appendChild(finishFlag);
 }
 
 function updateStageText() {
   const stageTextElem = document.getElementById('currentStageText');
   
+  if (stages.length === 0) {
+    stageTextElem.textContent = "";
+    return;
+  }
+
   if (timerState.elapsed === 0 && !timerState.running) {
-    stageTextElem.textContent = "준비 중이에요! ▶️ 시작을 눌러주세요";
-    stageTextElem.classList.remove('text-red-500');
+    stageTextElem.textContent = "[준비 중이에요!]";
     return;
   }
   
   if (timerState.currentStageIndex >= stages.length) {
-    stageTextElem.textContent = "🎉 모든 활동이 끝났어요! 🎉";
-    stageTextElem.classList.remove('text-red-500');
+    stageTextElem.textContent = "[모든 활동 완료!]";
     return;
   }
   
   if (timerState.currentStageIndex >= 0 && timerState.currentStageIndex < stages.length) {
     const currentName = stages[timerState.currentStageIndex].name;
-    stageTextElem.textContent = `지금은 [${currentName}] 시간이에요!`;
-    
-    // 남은 시간이 1분 이하일 때 색상 변경
-    const displayedTimeElapsed = isNudgeMode 
-      ? timerState.timerCore.getDisplayedTime(timerState.elapsed)
-      : timerState.elapsed;
-      
-    const currentStageEnd = stageBoundaries[timerState.currentStageIndex];
-    const remainingInStage = currentStageEnd - displayedTimeElapsed;
-    
-    if (remainingInStage <= 60 && remainingInStage > 0) {
-      stageTextElem.classList.add('text-red-500');
-      stageTextElem.classList.add('animate-pulse');
-    } else {
-      stageTextElem.classList.remove('text-red-500');
-      stageTextElem.classList.remove('animate-pulse');
-    }
+    stageTextElem.textContent = `[현재: ${currentName}]`;
   }
 }
 
 function updateUI() {
   const bigTimeElement = document.getElementById('bigTime');
   const progressBarElement = document.getElementById('progressBar');
-  const trackCharacter = document.getElementById('trackCharacter');
+  const progressTooltip = document.getElementById('progressTooltip');
   
   const displayedTimeElapsed = isNudgeMode 
     ? timerState.timerCore.getDisplayedTime(timerState.elapsed)
@@ -180,41 +163,58 @@ function updateUI() {
     : 0;
     
   progressBarElement.style.width = `${percent}%`;
-  trackCharacter.style.left = `calc(${percent}% + 16px)`;
+
+  // 시간 경고 시스템 (V1 기능 복구)
+  const remainingMinutes = remainingTotal / 60;
+  if (remainingMinutes <= 1 || percent >= 95) {
+    bigTimeElement.style.color = '#dc2626'; // 빨간색
+    progressBarElement.style.backgroundColor = '#dc2626';
+  } else {
+    bigTimeElement.style.color = isDarkMode ? '#ffffff' : '#1f2937';
+    progressBarElement.style.backgroundColor = '#3b82f6'; // blue-500
+  }
 
   // Stage 계산
-  let newStageIndex = 0;
-  for (let i = 0; i < stageBoundaries.length; i++) {
-    if (displayedTimeElapsed < stageBoundaries[i]) {
-      newStageIndex = i;
-      break;
+  if (stages.length > 0) {
+    let newStageIndex = 0;
+    for (let i = 0; i < stageBoundaries.length; i++) {
+      if (displayedTimeElapsed < stageBoundaries[i]) {
+        newStageIndex = i;
+        break;
+      }
     }
-  }
-  if (displayedTimeElapsed >= timerState.totalDisplayedSeconds) {
-    newStageIndex = stages.length; // Finished
-  }
-  
-  // 단계가 바뀌었을 때
-  if (newStageIndex !== timerState.currentStageIndex && timerState.running) {
-    timerState.currentStageIndex = newStageIndex;
-    updateStageText();
+    if (displayedTimeElapsed >= timerState.totalDisplayedSeconds) {
+      newStageIndex = stages.length; // Finished
+    }
     
-    // 소리 재생
-    if (newStageIndex < stages.length && newStageIndex > 0) {
-      playSound('soundStageChange');
-    } else if (newStageIndex === stages.length) {
+    // 단계 전환 이벤트
+    if (newStageIndex !== timerState.currentStageIndex && timerState.running) {
+      timerState.currentStageIndex = newStageIndex;
+      updateStageText();
+      
+      if (newStageIndex < stages.length && newStageIndex > 0) {
+        playSound('soundStageChange');
+      } else if (newStageIndex === stages.length) {
+        playSound('soundFinish');
+        showConfetti();
+        stopTimer();
+      }
+    } else if (!timerState.running && timerState.elapsed === 0) {
+      timerState.currentStageIndex = -1;
+    }
+  } else {
+    // 단일 타이머 종료 시
+    if (remainingTotal <= 0 && timerState.running) {
       playSound('soundFinish');
       showConfetti();
       stopTimer();
     }
-  } else if (!timerState.running && timerState.elapsed === 0) {
-    timerState.currentStageIndex = -1; // Ready state
   }
 
   // 버튼 상태
   document.getElementById('startBtn').disabled = timerState.running || remainingTotal <= 0;
   document.getElementById('pauseBtn').disabled = !timerState.running;
-  document.getElementById('resetBtn').disabled = timerState.elapsed === 0;
+  document.getElementById('resetBtn').disabled = timerState.elapsed === 0 && !timerState.running;
 }
 
 function playSound(id) {
@@ -261,10 +261,10 @@ function tick() {
 
 function startTimer() {
   if (timerState.running || timerState.elapsed >= timerState.totalDisplayedSeconds) return;
-  if (timerState.totalDisplayedSeconds === 0) return; // 단계가 없을 때
+  if (timerState.totalDisplayedSeconds <= 0) return;
   
-  if (timerState.elapsed === 0) {
-    timerState.currentStageIndex = 0; // 시작
+  if (timerState.elapsed === 0 && stages.length > 0) {
+    timerState.currentStageIndex = 0;
     updateStageText();
   }
   
@@ -288,15 +288,183 @@ function stopTimer() {
 function resetTimer() {
   stopTimer();
   timerState.elapsed = 0;
-  timerState.currentStageIndex = -1;
+  if (stages.length > 0) {
+    timerState.currentStageIndex = -1;
+  }
+  
+  // 원래 설정된 시간으로 롤백 (시간 가감으로 변경된 것 초기화)
+  timerState.totalDisplayedSeconds = timerState.originalDisplayedSeconds;
+  timerState.timerCore = getThreePhaseTourbillonTimer(timerState.totalDisplayedSeconds);
+  if (stages.length > 0) recalcBoundaries();
+  
   updateUI();
   updateStageText();
+  
+  const logContent = document.getElementById('testLogContent');
+  if (logContent) logContent.innerHTML = '';
 }
 
-// --- 컨트롤 버튼 연동 ---
-document.getElementById('startBtn').addEventListener('click', startTimer);
+// --- V1 드롭다운 / 직접입력 연동 ---
+const minutesSelect = document.getElementById('minutes');
+const minuteInput = document.getElementById('minuteInput');
+const customInputWrapper = document.getElementById('customInputWrapper');
+
+minutesSelect.addEventListener('change', function() {
+  if (stages.length > 0) return; // 단계가 있으면 드롭다운 무시
+
+  const selectedValue = this.value;
+  if (selectedValue === 'custom') {
+    customInputWrapper.style.display = 'flex';
+    minuteInput.disabled = false;
+    setTimeout(() => minuteInput.focus(), 300);
+    const min = parseInt(minuteInput.value, 10) || 1;
+    timerState.totalDisplayedSeconds = min * 60;
+  } else {
+    customInputWrapper.style.display = 'none';
+    minuteInput.disabled = true;
+    const min = parseInt(selectedValue, 10);
+    minuteInput.value = min;
+    timerState.totalDisplayedSeconds = min * 60;
+  }
+  initTimerState(true);
+});
+
+minuteInput.addEventListener('input', function() {
+  if (stages.length > 0 || minutesSelect.value !== 'custom') return;
+  let min = parseInt(this.value, 10);
+  if (isNaN(min) || min < 1) min = 1;
+  if (min > 180) min = 180;
+  this.value = min;
+  timerState.totalDisplayedSeconds = min * 60;
+  initTimerState(true);
+});
+
+// --- 시간 가감 버튼 (+1, -5 등) ---
+function addMinutes(min) {
+  // 표시 시간 기준으로 변경
+  const displayedTimeElapsed = isNudgeMode 
+    ? timerState.timerCore.getDisplayedTime(timerState.elapsed)
+    : timerState.elapsed;
+    
+  let currentRemaining = timerState.totalDisplayedSeconds - displayedTimeElapsed;
+  currentRemaining += min * 60;
+  
+  const maxSec = 180 * 60;
+  if (currentRemaining > maxSec) currentRemaining = maxSec;
+  if (currentRemaining < 0) currentRemaining = 0;
+  
+  timerState.totalDisplayedSeconds = currentRemaining + displayedTimeElapsed;
+  timerState.timerCore = getThreePhaseTourbillonTimer(timerState.totalDisplayedSeconds);
+  
+  if (stages.length > 0) {
+    // 단계를 쓰고 있을 때는 마지막 단계 시간을 늘리거나 줄이는 것으로 간주
+    // 복잡도를 피하기 위해 단순히 전체 totalDisplayedSeconds만 업데이트하고, 
+    // boundary는 비율에 맞춰 늘리거나, 그냥 무시. 여기서는 비율 맞춰 스케일링
+    const scale = timerState.totalDisplayedSeconds / timerState.originalDisplayedSeconds;
+    stageBoundaries = [];
+    let accumulated = 0;
+    stages.forEach(stage => {
+      accumulated += (stage.minutes * 60) * scale;
+      stageBoundaries.push(accumulated);
+    });
+    renderTrackFlags();
+  }
+  
+  updateUI();
+}
+
+document.getElementById('add1min').addEventListener('click', () => addMinutes(1));
+document.getElementById('add5min').addEventListener('click', () => addMinutes(5));
+document.getElementById('add10min').addEventListener('click', () => addMinutes(10));
+document.getElementById('sub1min').addEventListener('click', () => addMinutes(-1));
+document.getElementById('sub5min').addEventListener('click', () => addMinutes(-5));
+document.getElementById('sub10min').addEventListener('click', () => addMinutes(-10));
+
+// --- 메인 버튼 연동 ---
+function logPhaseInfo(action) {
+  const logContent = document.getElementById('testLogContent');
+  if (!logContent) return;
+  const t = timerState.totalDisplayedSeconds;
+  
+  if (isNudgeMode) {
+    const timer = getThreePhaseTourbillonTimer(t);
+    const html = `
+      <div class="mb-2">
+        <b>[${action}]</b> 총 표시시간: <b>${Math.round(t/60)}분</b> <span class="text-purple-600 dark:text-purple-400">(넛지 모드)</span><br/>
+        Phase1: <span class="text-blue-700">${(timer.phaseReal[0]||0).toFixed(1)}s</span> (warp ${timer.warpFactors[0]}) |
+        Phase2: <span class="text-blue-700">${(timer.phaseReal[1]||0).toFixed(1)}s</span> (warp ${timer.warpFactors[1]}) |
+        Phase3: <span class="text-blue-700">${(timer.phaseReal[2]||0).toFixed(1)}s</span> (warp ${timer.warpFactors[2]})<br/>
+        <span class="text-gray-500">보정값: ${timer.correction.toFixed(4)}</span>
+      </div>
+    `;
+    logContent.innerHTML += html;
+  } else {
+    const html = `
+      <div class="mb-2">
+        <b>[${action}]</b> 총 표시시간: <b>${Math.round(t/60)}분</b> <span class="text-gray-600 dark:text-gray-400">(일반 모드)</span><br/>
+        <span class="text-gray-500">실제 시간과 동일하게 진행됩니다.</span>
+      </div>
+    `;
+    logContent.innerHTML += html;
+  }
+}
+
+function startTimerWithLog() {
+  logPhaseInfo('Start');
+  startTimer();
+}
+
+document.getElementById('startBtn').addEventListener('click', startTimerWithLog);
 document.getElementById('pauseBtn').addEventListener('click', pauseTimer);
 document.getElementById('resetBtn').addEventListener('click', resetTimer);
+
+['add1min','add5min','add10min','sub1min','sub5min','sub10min'].forEach(id => {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.addEventListener('click', function() {
+    logPhaseInfo(btn.textContent);
+  });
+});
+
+// --- 아코디언 및 진행바 툴팁 ---
+window.toggleTestLog = function() {
+  const content = document.getElementById('testLogContent');
+  const toggle = document.getElementById('testLogToggle');
+  
+  if (content.style.display === 'none') {
+    content.style.display = 'block';
+    toggle.textContent = '▼';
+    toggle.style.transform = 'rotate(0deg)';
+  } else {
+    content.style.display = 'none';
+    toggle.textContent = '▶';
+    toggle.style.transform = 'rotate(-90deg)';
+  }
+};
+
+let progressTooltipInterval = null;
+const progressBarWrapper = document.getElementById('progressBar')?.parentElement;
+const progressTooltip = document.getElementById('progressTooltip');
+
+function updateTooltip() {
+  const totalSec = timerState.totalDisplayedSeconds;
+  const elapsedSec = isNudgeMode 
+    ? timerState.timerCore.getDisplayedTime(timerState.elapsed)
+    : timerState.elapsed;
+  progressTooltip.textContent = `총 시간: ${formatTime(totalSec)} / 경과: ${formatTime(elapsedSec)}`;
+}
+
+if (progressBarWrapper && progressTooltip) {
+  progressBarWrapper.addEventListener('mouseenter', () => {
+    updateTooltip();
+    progressTooltip.classList.remove('hidden');
+    progressTooltipInterval = setInterval(updateTooltip, 100);
+  });
+  progressBarWrapper.addEventListener('mouseleave', () => {
+    progressTooltip.classList.add('hidden');
+    if (progressTooltipInterval) clearInterval(progressTooltipInterval);
+  });
+}
 
 // --- 모달 및 설정 로직 ---
 const settingsModal = document.getElementById('settingsModal');
@@ -306,14 +474,18 @@ const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 const addStageBtn = document.getElementById('addStageBtn');
 const stagesContainer = document.getElementById('stagesContainer');
 
+const helpBtn = document.getElementById('helpBtn');
+const helpModal = document.getElementById('helpModal');
+const closeHelpModal = document.getElementById('closeHelpModal');
+
 function renderSettingsStages() {
   stagesContainer.innerHTML = '';
   stages.forEach((stage, index) => {
-    addStageRow(stage.name, stage.minutes, index);
+    addStageRow(stage.name, stage.minutes);
   });
 }
 
-function addStageRow(name = '', minutes = 5, index = -1) {
+function addStageRow(name = '', minutes = 5) {
   const div = document.createElement('div');
   div.className = 'flex gap-2 items-center stage-row';
   div.innerHTML = `
@@ -322,11 +494,7 @@ function addStageRow(name = '', minutes = 5, index = -1) {
     <span class="text-gray-500 dark:text-gray-400">분</span>
     <button class="remove-stage-btn text-red-500 hover:text-red-700 p-2 font-bold text-xl ml-2">&times;</button>
   `;
-  
-  div.querySelector('.remove-stage-btn').addEventListener('click', () => {
-    div.remove();
-  });
-  
+  div.querySelector('.remove-stage-btn').addEventListener('click', () => div.remove());
   stagesContainer.appendChild(div);
 }
 
@@ -340,9 +508,7 @@ closeSettingsBtn.addEventListener('click', () => {
   settingsModal.classList.add('hidden');
 });
 
-addStageBtn.addEventListener('click', () => {
-  addStageRow('새 활동', 5);
-});
+addStageBtn.addEventListener('click', () => addStageRow('새 활동', 5));
 
 saveSettingsBtn.addEventListener('click', () => {
   const rows = document.querySelectorAll('.stage-row');
@@ -355,31 +521,38 @@ saveSettingsBtn.addEventListener('click', () => {
     }
   });
   
-  if (newStages.length === 0) {
-    alert("최소 1개 이상의 활동 단계가 필요합니다.");
-    return;
-  }
-  
   stages = newStages;
-  localStorage.setItem('nudgeStages', JSON.stringify(stages));
+  if (stages.length > 0) {
+    localStorage.setItem('nudgeStages', JSON.stringify(stages));
+  } else {
+    localStorage.removeItem('nudgeStages');
+  }
   
   initTimerState();
   settingsModal.classList.add('hidden');
 });
 
+helpBtn.addEventListener('click', () => helpModal.classList.remove('hidden'));
+closeHelpModal.addEventListener('click', () => helpModal.classList.add('hidden'));
+[helpModal, settingsModal].forEach(modal => {
+  modal.addEventListener('mousedown', (e) => {
+    if (e.target === modal) modal.classList.add('hidden');
+  });
+});
+
 // --- 다크 모드 & 넛지 토글 ---
 function applyDarkMode() {
-  const darkModeBtn = document.getElementById('darkModeToggleBtn');
+  const darkModeBtn = document.getElementById('darkModeBtn');
   if (isDarkMode) {
     document.documentElement.classList.add('dark');
-    if (darkModeBtn) darkModeBtn.textContent = '☀️';
+    if (darkModeBtn) { darkModeBtn.textContent = '☀️'; darkModeBtn.title = '일반모드'; }
   } else {
     document.documentElement.classList.remove('dark');
-    if (darkModeBtn) darkModeBtn.textContent = '🌙';
+    if (darkModeBtn) { darkModeBtn.textContent = '🌙'; darkModeBtn.title = '야간모드'; }
   }
 }
 
-document.getElementById('darkModeToggleBtn').addEventListener('click', () => {
+document.getElementById('darkModeBtn').addEventListener('click', () => {
   isDarkMode = !isDarkMode;
   localStorage.setItem('darkMode', isDarkMode);
   applyDarkMode();
@@ -391,12 +564,18 @@ if (nudgeSwitch) {
   nudgeSwitch.addEventListener('change', () => {
     isNudgeMode = nudgeSwitch.checked;
     localStorage.setItem('nudgeMode', isNudgeMode);
+    document.getElementById('mainTitle').textContent = isNudgeMode ? 'Nudge Timer' : 'Timer';
     updateUI();
   });
+  document.getElementById('mainTitle').textContent = isNudgeMode ? 'Nudge Timer' : 'Timer';
 }
 
 // --- 초기화 ---
-window.onload = () => {
+window.addEventListener('DOMContentLoaded', () => {
+  minuteInput.value = minutesSelect.value;
+  minuteInput.disabled = true;
+  customInputWrapper.style.display = 'none';
+  
   applyDarkMode();
   initTimerState();
-};
+});

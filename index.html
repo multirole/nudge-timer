@@ -1,114 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>👉 Nudge Timer</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class'
-    }
-  </script>
-</head>
-<body class="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 min-h-screen flex flex-col items-center justify-center transition-colors duration-300 font-sans">
-  <!-- 메인 컨테이너 -->
-  <div id="timerContainer" class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 sm:p-12 w-full max-w-4xl border-4 border-blue-100 dark:border-gray-600 relative transform origin-center transition-all duration-300">
-    
-    <!-- 교사용 설정 버튼 (우측 상단) -->
-    <button id="settingsBtn" class="absolute top-6 right-6 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 text-3xl transition-transform hover:rotate-90 focus:outline-none" title="선생님 설정">⚙️</button>
-
-    <!-- 제목 -->
-    <h1 id="mainTitle" class="text-3xl sm:text-4xl font-extrabold mb-8 text-center text-indigo-600 dark:text-indigo-400">✨ 즐거운 활동 시간 ✨</h1>
-
-    <!-- 현재 활동 안내 표시부 -->
-    <div class="flex flex-col items-center mb-8 bg-blue-50 dark:bg-gray-700 rounded-2xl p-6 shadow-inner border-2 border-blue-200 dark:border-gray-500">
-      <div id="currentStageText" class="text-3xl sm:text-5xl md:text-6xl font-black text-center text-gray-800 dark:text-white mb-4 animate-bounce">
-        준비 중이에요!
-      </div>
-      <div id="bigTime" class="text-[4rem] sm:text-[6rem] md:text-[8rem] font-extrabold tracking-widest transition-all duration-300 leading-none select-none text-gray-700 dark:text-gray-200">
-        00:00
-      </div>
-    </div>
-
-    <!-- 시각적 트랙 (진행바) -->
-    <div class="w-full mb-10 px-4 relative">
-      <div class="w-full h-8 bg-gray-200 dark:bg-gray-600 rounded-full relative shadow-inner overflow-hidden border-2 border-gray-300 dark:border-gray-500">
-        <!-- 채워지는 부분 -->
-        <div id="progressBar" class="h-full bg-gradient-to-r from-green-400 to-blue-500 transition-all duration-300 ease-linear rounded-full" style="width:0%"></div>
-      </div>
-      
-      <!-- 깃발(체크포인트) 컨테이너 -->
-      <div id="trackFlags" class="absolute top-0 left-4 right-4 h-full pointer-events-none">
-        <!-- JS에서 동적으로 깃발 삽입 -->
-      </div>
-      
-      <!-- 움직이는 캐릭터 -->
-      <div id="trackCharacter" class="absolute top-[-10px] text-4xl transition-all duration-300 ease-linear z-10 filter drop-shadow-md" style="left: calc(0% + 16px); transform: translateX(-50%);">
-        🐶
-      </div>
-    </div>
-
-    <!-- 메인 컨트롤 버튼 -->
-    <div class="flex justify-center gap-4 sm:gap-6 mt-4">
-      <button id="startBtn" class="bg-green-500 hover:bg-green-600 text-white font-black py-4 px-8 sm:px-12 rounded-full shadow-lg transition-transform transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:transform-none text-xl sm:text-2xl border-b-4 border-green-700">▶️ 시작</button>
-      <button id="pauseBtn" class="bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-black py-4 px-8 sm:px-12 rounded-full shadow-lg transition-transform transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:transform-none text-xl sm:text-2xl border-b-4 border-yellow-600">⏸️ 멈춤</button>
-      <button id="resetBtn" class="bg-red-400 hover:bg-red-500 text-white font-black py-4 px-6 sm:px-8 rounded-full shadow-lg transition-transform transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:transform-none text-xl sm:text-2xl border-b-4 border-red-600">🔄 처음부터</button>
-    </div>
-
-  </div>
-
-  <!-- 교사용 설정 모달 (기본 숨김) -->
-  <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm transition-all duration-300 hidden">
-    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full p-8 relative flex flex-col border-4 border-gray-200 dark:border-gray-600 max-h-[90vh] overflow-y-auto">
-      <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white flex items-center gap-2">
-        <span>⚙️</span> 선생님 설정
-      </h2>
-      
-      <!-- 기본 옵션들 -->
-      <div class="flex items-center justify-between mb-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
-        <span class="font-semibold text-gray-700 dark:text-gray-200">다크 모드 (야간 모드)</span>
-        <button id="darkModeToggleBtn" class="text-2xl">🌙</button>
-      </div>
-
-      <div class="flex items-center justify-between mb-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
-        <div class="flex flex-col">
-          <span class="font-semibold text-gray-700 dark:text-gray-200">시간 넛지(Nudge) 효과</span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">초반엔 빠르게, 후반엔 느리게 흐릅니다.</span>
-        </div>
-        <label class="inline-flex items-center cursor-pointer">
-          <input id="nudgeSwitch" type="checkbox" class="sr-only peer">
-          <div class="relative w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-500 peer-checked:bg-blue-500"></div>
-        </label>
-      </div>
-
-      <!-- 활동 단계 설정 -->
-      <div class="mb-4">
-        <div class="flex justify-between items-end mb-2">
-          <h3 class="font-bold text-gray-800 dark:text-white">활동 단계 설정 (체크포인트)</h3>
-          <button id="addStageBtn" class="text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-1 px-3 rounded-lg transition-colors">+ 단계 추가</button>
-        </div>
-        <div id="stagesContainer" class="flex flex-col gap-3">
-          <!-- 동적 단계 입력 폼 -->
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-3 mt-8">
-        <button id="closeSettingsBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-xl transition-colors">취소</button>
-        <button id="saveSettingsBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">저장하기</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 파티클 이펙트 컨테이너 -->
-  <div id="confettiContainer" class="fixed inset-0 pointer-events-none z-40"></div>
-
-  <!-- 오디오 요소들 -->
-  <audio id="soundStageChange" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-  <audio id="soundFinish" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3" preload="auto"></audio>
-
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <script src="nudge-timer.js"></script>
-</body>
-</html> 
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nudge Timer</title>
+    <meta name="description" content="교실용 스마트 넛지 타이머" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

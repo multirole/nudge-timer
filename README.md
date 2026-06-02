@@ -1,79 +1,73 @@
-# 👉 Nudge Timer
+# React + TypeScript + Vite
 
-스마트한 시간 왜곡 타이머로 집중력과 몰입도를 향상시키는 웹 애플리케이션입니다.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## 🎯 특징
+Currently, two official plugins are available:
 
-- **3단계 시간 왜곡**: 초반 집중 유도 → 중반 안정 → 후반 여유 제공
-- **직관적인 UI**: 깔끔하고 모던한 디자인
-- **유연한 시간 설정**: 1분~3시간까지 자유롭게 설정
-- **실시간 조정**: +1분, +5분, +10분 버튼으로 즉시 조정
-- **시간 경고 시스템**: 1분 이하 또는 5% 이하 시 빨간색으로 경고 표시
-- **야간모드**: 🌙/☀️ 토글 버튼으로 눈의 피로를 줄이는 다크 테마 지원
-- **넛지 타이머 토글**: 상단 스위치로 넛지 타이머(시간 왜곡)와 일반 타이머를 자유롭게 전환, 상태에 따라 상단 제목이 자동 변경됨
-- **진행바 툴팁**: 진행바에 마우스를 올리면 총 시간과 경과 시간이 실시간으로 툴팁에 표시됨
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## 🚀 사용법
+## React Compiler
 
-1. **시간 설정**: 드롭다운에서 원하는 시간 선택 또는 직접 입력
-2. **시작**: Start 버튼을 눌러 타이머 시작
-3. **조정**: 필요시 +/- 버튼으로 시간 조정
-4. **일시정지/재시작**: Pause/Start 버튼으로 제어
-5. **초기화**: Reset 버튼으로 처음부터 다시 시작
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## ⚡ 넛지 효과
+## Expanding the ESLint configuration
 
-### Phase 1 (60% 구간)
-- **시간 왜곡**: 1.2배 빠르게 흐름
-- **목적**: 초기 집중력 유도
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-### Phase 2 (10% 구간)  
-- **시간 왜곡**: 1.0배 (실제 시간과 동일)
-- **목적**: 안정적인 작업 환경
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-### Phase 3 (30% 구간)
-- **시간 왜곡**: 0.8배 느리게 흐름
-- **목적**: 마무리 작업을 위한 여유 제공
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
-## 🛠️ 기술 스택
-
-- **HTML5**: 시맨틱 마크업
-- **CSS3**: Tailwind CSS 프레임워크
-- **JavaScript**: 바닐라 JS (ES6+)
-- **배포**: GitHub Pages
-
-## 📱 호환성
-
-- Chrome, Firefox, Safari, Edge 최신 버전
-- 모바일 브라우저 지원
-- 반응형 디자인
-
-## 🔗 배포
-
-GitHub Pages를 통해 배포됩니다:
-```
-https://multirole.github.io/nudge-timer/
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
-## 📄 라이선스
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-MIT License
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
----
-
-**NudgeTimer**는 시간 관리와 집중력 향상을 위한 도구입니다. 🎯
-
----
-
-## 📝 업데이트 기록
-
-### 2024-12-19
-- **시간 경고 시스템 추가**: 1분 이하 또는 5% 이하 시 빨간색으로 경고 표시
-- **시각적 개선**: 글로우 효과와 진행바 색상 변경으로 긴급감 표현
-- **사용자 경험 향상**: 타이머 종료 임박 시 직관적인 시각적 피드백 제공
-- **반응형 디자인 개선**: 창 크기에 따른 동적 크기 조정으로 멀티태스킹 환경 최적화
-- **모바일 최적화**: 작은 화면에서도 완벽한 사용성을 위한 UI 요소 크기 조정
-- **야간모드 구현**: 🌙/☀️ 토글 버튼으로 다크 테마 전환, 로컬 스토리지에 설정 저장
-- **접근성 향상**: 야간 학습 환경에서 눈의 피로를 줄이는 다크 테마 지원 
-- **넛지 타이머 토글 추가**: 스위치로 넛지 타이머/일반 타이머 전환, 제목 동적 변경
-- **진행바 툴팁 기능 추가**: 진행바 hover 시 총 시간/경과 시간 실시간 표시
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```

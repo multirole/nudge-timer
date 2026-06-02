@@ -1,0 +1,553 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────
+   NOMOS Tangente–Inspired Design System
+   Bauhaus · Swiss Typography · Pure Function
+───────────────────────────────────────────────────────── */
+
+:root {
+  --cream:      #F7F4EE;
+  --cream-dark: #ECE8DF;
+  --ink:        #1A1A1A;
+  --ink-mid:    #555555;
+  --ink-light:  #999999;
+  --ink-faint:  #CCCCCC;
+  --rule:       #DEDAD2;
+  --navy:       #1B3A8A;
+  --navy-pale:  #E6EBF5;
+  --warning:    #B91C1C;
+  --warning-pale: #FEE2E2;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter Variable', system-ui, sans-serif;
+  background-color: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Layout Shell ── */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: min(2.5rem, 3vh) 2rem;
+}
+
+.app-card {
+  width: 100%;
+  max-width: 1200px;
+  background: #FFFFFF;
+  border: 1px solid var(--rule);
+  padding: min(3rem, 5vh) 4rem;
+}
+
+/* ── Top Bar ── */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: min(1.5rem, 3vh);
+  border-bottom: 1px solid var(--rule);
+}
+
+.wordmark {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* ── Nudge Toggle ── */
+.nudge-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.nudge-toggle-label {
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+}
+
+.nudge-track {
+  width: 32px;
+  height: 16px;
+  border: 1px solid var(--ink-faint);
+  border-radius: 8px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+  background: transparent;
+}
+
+.nudge-track.on {
+  border-color: var(--navy);
+  background-color: var(--navy-pale);
+}
+
+.nudge-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.nudge-track.on .nudge-thumb {
+  transform: translateX(16px);
+  background: var(--navy);
+}
+
+/* ── Icon Buttons ── */
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-light);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.2rem 0;
+  transition: color 0.15s;
+  font-family: 'Inter Variable', sans-serif;
+}
+
+.icon-btn:hover { color: var(--ink); }
+
+/* ── Theme Selector ── */
+.theme-selector {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.theme-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-faint);
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  position: relative;
+}
+
+.theme-dot:hover { border-color: var(--ink-mid); }
+
+.theme-dot.active {
+  background: var(--navy);
+  border-color: var(--navy);
+}
+
+.theme-label {
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  margin-left: 0.25rem;
+}
+
+/* ── Stage Label ── */
+.stage-label {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.stage-label-text {
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+}
+
+.stage-label-text.active {
+  color: var(--navy);
+}
+
+/* ── Timer Display ── */
+.timer-display {
+  text-align: center;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.timer-number {
+  font-size: clamp(6rem, min(20vw, 35vh), 18rem);
+  font-weight: 200;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.5s;
+  font-feature-settings: "tnum";
+  line-height: 1;
+}
+
+.timer-number.warning {
+  color: var(--warning);
+}
+
+/* ── Warning Pulse (stage label) ── */
+@keyframes warning-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+.warning-pulse {
+  animation: warning-pulse 2.8s ease-in-out infinite;
+  color: var(--warning) !important;
+}
+
+/* ── Progress Rule ── */
+.progress-area {
+  margin: min(2rem, 4vh) 0;
+  position: relative;
+}
+
+/* Tick marks (stage markers) */
+.tick-row {
+  display: flex;
+  position: relative;
+  height: 12px;
+  margin-bottom: 4px;
+}
+
+.tick-mark {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  background: var(--ink-faint);
+  transform: translateX(-50%);
+}
+
+.tick-mark.major {
+  height: 10px;
+  background: var(--ink-mid);
+}
+
+.tick-mark.minor { height: 5px; }
+
+/* Progress line */
+.progress-rule {
+  position: relative;
+  height: 1px;
+  background: var(--rule);
+  width: 100%;
+}
+
+.progress-fill-line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 1px;
+  background: var(--navy);
+  transition: width 0.3s linear;
+}
+
+.progress-fill-line.warning {
+  background: var(--warning);
+}
+
+/* Moving dot — like a watch hand tip */
+.progress-dot {
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--navy);
+  transform: translate(-50%, -50%);
+  transition: left 0.3s linear;
+  box-shadow: 0 0 0 2px white, 0 0 0 3px var(--navy);
+}
+
+.progress-dot.warning {
+  background: var(--warning);
+  box-shadow: 0 0 0 2px white, 0 0 0 3px var(--warning);
+}
+
+/* Stage name labels below */
+.stage-names-row {
+  display: flex;
+  position: relative;
+  height: 18px;
+  margin-top: 8px;
+}
+
+.stage-name-label {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.stage-name-label.passed {
+  color: var(--navy);
+  opacity: 0.6;
+}
+
+/* ── Controls ── */
+.controls-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: min(2.5rem, 4vh);
+  padding-top: min(1.5rem, 3vh);
+  border-top: 1px solid var(--rule);
+}
+
+.ctrl-btn {
+  font-family: 'Inter Variable', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--ink-faint);
+  color: var(--ink-mid);
+  padding: 0.55rem 1.6rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ctrl-btn:hover:not(:disabled) {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.ctrl-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.ctrl-btn.primary {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+.ctrl-btn.primary:hover:not(:disabled) {
+  background: var(--navy);
+  color: white;
+}
+
+/* ── Adjust Buttons ── */
+.adjust-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.adj-btn {
+  font-family: 'Inter Variable', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  color: var(--ink-light);
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  transition: color 0.15s;
+  border-bottom: 1px solid transparent;
+}
+
+.adj-btn:hover { color: var(--ink); border-bottom-color: var(--ink-faint); }
+.adj-btn.minus:hover { color: var(--warning); border-bottom-color: var(--warning-pale); }
+
+/* ── Theme Canvas Areas ── */
+.theme-canvas {
+  width: 100%;
+  height: 100px;
+  position: relative;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+/* ── Nudge Message ── */
+.nudge-msg-wrap {
+  text-align: center;
+  margin-bottom: 1rem;
+  min-height: 1.4rem;
+}
+
+.nudge-msg {
+  display: inline-block;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--ink-mid);
+  transition: opacity 0.4s ease;
+}
+
+.nudge-msg.hidden { opacity: 0; }
+
+/* ── Modal Overlay ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(247, 244, 238, 0.92);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.modal-box {
+  background: white;
+  border: 1px solid var(--rule);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-title {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.modal-input {
+  font-family: 'Inter Variable', sans-serif;
+  font-size: 0.85rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink);
+  padding: 0.4rem 0;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.modal-input:focus { border-color: var(--navy); }
+.modal-input::placeholder { color: var(--ink-faint); }
+
+.modal-input.num {
+  width: 52px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.modal-stage-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.modal-stage-num {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  width: 1.2rem;
+  flex-shrink: 0;
+}
+
+.modal-remove-btn {
+  background: none;
+  border: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.modal-remove-btn:hover { color: var(--warning); }
+
+.modal-add-btn {
+  font-family: 'Inter Variable', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--ink-faint);
+  color: var(--ink-light);
+  cursor: pointer;
+  padding: 0.2rem 0;
+  margin-top: 0.75rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+.modal-add-btn:hover { color: var(--navy); border-color: var(--navy); }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+
+/* ── Help Section ── */
+.help-item {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.8rem;
+}
+.help-item-label { font-weight: 600; color: var(--ink-mid); }
+.help-item-desc  { color: var(--ink-light); line-height: 1.6; }
+
+/* ── Tooltip ── */
+.progress-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-mid);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.progress-area:hover .progress-tooltip { opacity: 1; }
