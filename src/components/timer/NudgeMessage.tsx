@@ -8,40 +8,59 @@ export default function NudgeMessage() {
   const [visible, setVisible] = useState(false);
   const queueRef = useRef<string[]>([]);
   const isProcessingRef = useRef(false);
+  const processVersion = useRef(0);
 
   const prevElapsed = useRef(elapsed);
   const prevRunning = useRef(isRunning);
   const prevStage = useRef(currentStageIndex);
 
-  const processQueue = async () => {
+  const processQueue = async (version: number) => {
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
 
     while (queueRef.current.length > 0) {
+      if (processVersion.current !== version) return;
       const text = queueRef.current.shift()!;
       setMsg(text);
       
       // DOM 렌더링 후 페이드인
       await new Promise(res => setTimeout(res, 50));
+      if (processVersion.current !== version) return;
       setVisible(true);
       
       // 표시 시간
       await new Promise(res => setTimeout(res, 3500));
+      if (processVersion.current !== version) return;
       setVisible(false);
       
       // 페이드아웃 대기 (CSS transition)
       await new Promise(res => setTimeout(res, 500));
+      if (processVersion.current !== version) return;
       setMsg(null);
     }
 
-    isProcessingRef.current = false;
+    if (processVersion.current === version) {
+      isProcessingRef.current = false;
+    }
   };
 
-  const show = (m: string | string[]) => {
+  const show = (m: string | string[], force = false) => {
     const msgs = Array.isArray(m) ? m : [m];
     if (msgs.length > 0) {
+      if (force) {
+        processVersion.current += 1;
+        queueRef.current = [];
+        setVisible(false);
+        setMsg(null);
+        isProcessingRef.current = false;
+        setTimeout(() => {
+          queueRef.current.push(...msgs);
+          processQueue(processVersion.current);
+        }, 50);
+        return;
+      }
       queueRef.current.push(...msgs);
-      processQueue();
+      processQueue(processVersion.current);
     }
   };
 
@@ -100,7 +119,7 @@ export default function NudgeMessage() {
 
     // 기본 시간/상태 경고
     if (isRunning && elapsed >= totalSeconds && prevElapsed.current < totalSeconds)
-      show('종료. 수고했어요.');
+      show('종료. 수고했어요.', true);
     if (isRunning && pct >= 50 && prevPct < 50)
       show('절반 경과.');
     if (isRunning && pct >= 80 && prevPct < 80)
