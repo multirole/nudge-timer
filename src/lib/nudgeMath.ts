@@ -1,8 +1,9 @@
 import type { Stage } from '../types';
 
 export function formatTime(sec: number): string {
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
+  const ceilSec = Math.ceil(sec);
+  const m = Math.floor(ceilSec / 60);
+  const s = Math.floor(ceilSec % 60);
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
@@ -42,17 +43,19 @@ export function getThreePhaseTourbillonTimer(totalDisplayedSeconds: number, nudg
     phaseReal.reduce((a, b) => a + b, 0),
   ];
 
+  const effectiveSpeeds = warpFactors.map(w => w / correction);
+
   function getDisplayedTime(realTimeElapsed: number): number {
     if (realTimeElapsed <= 0) return 0;
     if (realTimeElapsed >= phaseBoundaries[3]) return totalDisplayedSeconds;
     
     let displayed = 0;
     if (realTimeElapsed <= phaseBoundaries[1]) {
-      displayed = realTimeElapsed * warpFactors[0] * correction;
+      displayed = realTimeElapsed * effectiveSpeeds[0];
     } else if (realTimeElapsed <= phaseBoundaries[2]) {
-      displayed = phaseDisplayed[0] + (realTimeElapsed - phaseBoundaries[1]) * warpFactors[1] * correction;
+      displayed = phaseDisplayed[0] + (realTimeElapsed - phaseBoundaries[1]) * effectiveSpeeds[1];
     } else {
-      displayed = phaseDisplayed[0] + phaseDisplayed[1] + (realTimeElapsed - phaseBoundaries[2]) * warpFactors[2] * correction;
+      displayed = phaseDisplayed[0] + phaseDisplayed[1] + (realTimeElapsed - phaseBoundaries[2]) * effectiveSpeeds[2];
     }
     return Math.min(displayed, totalDisplayedSeconds);
   }
@@ -62,11 +65,11 @@ export function getThreePhaseTourbillonTimer(totalDisplayedSeconds: number, nudg
     if (displayedTime >= totalDisplayedSeconds) return phaseBoundaries[3];
     
     if (displayedTime <= phaseDisplayed[0]) {
-      return displayedTime / (warpFactors[0] * correction);
+      return displayedTime / effectiveSpeeds[0];
     } else if (displayedTime <= phaseDisplayed[0] + phaseDisplayed[1]) {
-      return phaseBoundaries[1] + (displayedTime - phaseDisplayed[0]) / (warpFactors[1] * correction);
+      return phaseBoundaries[1] + (displayedTime - phaseDisplayed[0]) / effectiveSpeeds[1];
     } else {
-      return phaseBoundaries[2] + (displayedTime - phaseDisplayed[0] - phaseDisplayed[1]) / (warpFactors[2] * correction);
+      return phaseBoundaries[2] + (displayedTime - phaseDisplayed[0] - phaseDisplayed[1]) / effectiveSpeeds[2];
     }
   }
 
