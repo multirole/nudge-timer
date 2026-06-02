@@ -12,7 +12,7 @@ export default function StageLabel() {
   const remaining = Math.max(0, totalSeconds - displayed);
   const percent = totalSeconds > 0 ? (displayed / totalSeconds) * 100 : 0;
   const isBreak = stages.length === 1 && stages[0].name === '휴식';
-  const isWarning = !isBreak && (remaining / 60 <= 1 || percent >= 95) && isRunning;
+  const isWarning = (remaining / 60 <= 1 || percent >= 95) && isRunning;
 
   // Determine current stage index
   let idx = stages.length - 1;
@@ -29,7 +29,7 @@ export default function StageLabel() {
   if (isNotStarted) idx = 0;
   if (isFinished) idx = stages.length; // beyond last
 
-  const prevStage = idx > 0 && idx <= stages.length ? stages[idx - 1] : null;
+  const prevStage = (idx > 0 && idx <= stages.length && !isBreak) ? stages[idx - 1] : null;
   const currentStage = isFinished ? { name: isBreak ? '휴식' : '모든 활동 완료' } : stages[idx];
   const nextStage = idx < stages.length - 1 ? stages[idx + 1] : null;
 

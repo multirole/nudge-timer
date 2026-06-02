@@ -74,8 +74,9 @@ export default function NudgeMessage() {
 
     // 시작 메시지 처리 (첫 번째 스테이지)
     if (isRunning && !prevRunning.current && elapsed < 1) {
+      const isBreak = stages.length === 1 && stages[0].name === '휴식';
       const startMsgs = stages.length > 0 && stages[0].messages ? stages[0].messages.filter(m => m.displayMode === 'start') : [];
-      const messagesToQueue = ['시작합니다. 집중해봐요.'];
+      const messagesToQueue = isBreak ? [] : ['시작합니다. 집중해봐요.'];
       if (startMsgs.length > 0) {
         messagesToQueue.push(...startMsgs.map(m => m.text));
       }

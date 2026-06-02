@@ -89,7 +89,10 @@ export const useTimerStore = create<TimerState>((set) => ({
     // Check if finished
     if (newElapsed >= state.totalSeconds) {
       playFinishSound();
-      showConfetti();
+      const isBreak = state.stages.length === 1 && state.stages[0].name === '휴식';
+      if (!isBreak) {
+        showConfetti();
+      }
       return { elapsed: state.totalSeconds, isRunning: false, currentStageIndex: state.stages.length };
     }
 

@@ -8,11 +8,12 @@ export default function BigTimerDisplay() {
   const remaining = Math.max(0, totalSeconds - displayed);
   const percent = totalSeconds > 0 ? (displayed / totalSeconds) * 100 : 0;
   const isBreak = stages.length === 1 && stages[0].name === '휴식';
-  const isWarning = !isBreak && (remaining / 60 <= 1 || percent >= 95);
+  const isFinished = elapsed >= totalSeconds && totalSeconds > 0;
+  const isWarning = !isFinished && (remaining / 60 <= 1 || percent >= 95);
 
   return (
     <div className="timer-display">
-      <span className={`timer-number ${isWarning ? 'warning' : ''}`}>
+      <span className={`timer-number ${isWarning ? 'warning' : ''} ${isFinished ? 'finished' : ''}`}>
         {formatTime(remaining)}
       </span>
     </div>
