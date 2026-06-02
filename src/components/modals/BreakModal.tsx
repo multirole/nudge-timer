@@ -14,7 +14,7 @@ function getRoundedCurrentTime() {
 }
 
 export default function BreakModal({ onClose }: Props) {
-  const { setStages, start, reset } = useTimerStore();
+  const { setStages, start } = useTimerStore();
   const [mode, setMode] = useState<Mode>('DURATION');
   
   // Duration state
@@ -31,11 +31,11 @@ export default function BreakModal({ onClose }: Props) {
   }, []);
 
   const setTargetMinutes = (mins: number) => {
-    // setStages resets elapsed automatically, then start
     setStages([{
       id: String(Date.now()),
       name: '\ud734\uc2dd',
-      minutes: mins
+      minutes: mins,
+      messages: []
     }]);
     // Wait 2 ticks for Zustand state to flush, then start
     requestAnimationFrame(() => requestAnimationFrame(() => start()));
