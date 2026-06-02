@@ -15,7 +15,7 @@ export default function Header() {
         <span 
           className="wordmark" 
           style={{ cursor: 'pointer' }}
-          onClick={() => window.location.href = '/'}
+          onClick={() => window.location.reload()}
           title="처음으로 돌아가기"
         >
           Nudge Timer
