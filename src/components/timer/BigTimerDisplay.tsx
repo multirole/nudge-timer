@@ -7,7 +7,6 @@ export default function BigTimerDisplay() {
   const displayed = isNudgeMode ? getDisplayedTimeWithStages(stages, totalSeconds, elapsed, nudgeIntensity) : elapsed;
   const remaining = Math.max(0, totalSeconds - displayed);
   const percent = totalSeconds > 0 ? (displayed / totalSeconds) * 100 : 0;
-  const isBreak = stages.length === 1 && stages[0].name === '휴식';
   const isFinished = elapsed >= totalSeconds && totalSeconds > 0;
   const isWarning = !isFinished && (remaining / 60 <= 1 || percent >= 95);
 

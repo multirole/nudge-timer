@@ -1,7 +1,7 @@
 import { useTimerStore } from '../../store/timerStore';
 
 export default function TimerControls() {
-  const { isRunning, elapsed, totalSeconds, start, pause, reset } = useTimerStore();
+  const { isRunning, elapsed, totalSeconds, start, pause } = useTimerStore();
   const isFinished = elapsed >= totalSeconds && totalSeconds > 0;
 
   return (
