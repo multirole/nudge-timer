@@ -12,7 +12,7 @@ export default function TimerControls() {
       <button className="ctrl-btn" onClick={pause} disabled={!isRunning}>
         Pause
       </button>
-      <button className="ctrl-btn" onClick={reset} disabled={elapsed === 0 && !isRunning}>
+      <button className="ctrl-btn" onClick={() => window.location.reload()}>
         Reset
       </button>
     </div>
