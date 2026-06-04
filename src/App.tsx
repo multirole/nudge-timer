@@ -79,9 +79,10 @@ function BigClockDisplay({ onClick }: { onClick: () => void }) {
         <span style={{ opacity: showColon ? 1 : 0, transition: 'opacity 0.1s', margin: '0 -0.05em' }}>:</span>
         <span>{mm}</span>
         {showSeconds && (
-          <span style={{ fontSize: '0.45em', marginLeft: '0.5rem', opacity: 0.8, fontWeight: 300 }}>
-            {ss}
-          </span>
+          <>
+            <span style={{ opacity: showColon ? 1 : 0, transition: 'opacity 0.1s', margin: '0 -0.05em' }}>:</span>
+            <span>{ss}</span>
+          </>
         )}
       </span>
       
