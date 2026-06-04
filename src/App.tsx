@@ -48,38 +48,68 @@ function CurrentClock({ onClick }: { onClick?: () => void }) {
 }
 
 function BigClockDisplay({ onClick }: { onClick: () => void }) {
-  const [time, setTime] = useState(() => {
-    const d = new Date();
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  });
+  const [showSeconds, setShowSeconds] = useState(false);
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    const tick = () => {
-      const d = new Date();
-      setTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
-    };
-    const now = new Date();
-    const msUntilNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
-    const timeout = setTimeout(() => {
-      tick();
-      const interval = setInterval(tick, 60000);
-      return () => clearInterval(interval);
-    }, msUntilNextMinute);
-    return () => clearTimeout(timeout);
+    // 100ms 간격으로 업데이트하여 초와 깜빡임을 부드럽게 처리
+    const interval = setInterval(() => setNow(new Date()), 100);
+    return () => clearInterval(interval);
   }, []);
+
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  
+  // 500ms 켜지고 500ms 꺼짐 (깜빡임 효과)
+  const showColon = now.getMilliseconds() < 500;
 
   return (
     <div 
       className="timer-display" 
-      onClick={onClick} 
-      style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, margin: '4rem 0' }}
-      title="타이머로 돌아가기"
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, margin: '4rem 0' }}
     >
-      <span className="timer-number" style={{ transition: 'all 0.3s' }}>
-        {time}
+      <span 
+        className="timer-number" 
+        style={{ cursor: 'pointer', transition: 'all 0.3s', display: 'flex', alignItems: 'baseline' }}
+        onClick={onClick}
+        title="타이머로 돌아가기"
+      >
+        <span>{hh}</span>
+        <span style={{ opacity: showColon ? 1 : 0, transition: 'opacity 0.1s', margin: '0 -0.05em' }}>:</span>
+        <span>{mm}</span>
+        {showSeconds && (
+          <span style={{ fontSize: '0.45em', marginLeft: '0.5rem', opacity: 0.8, fontWeight: 300 }}>
+            {ss}
+          </span>
+        )}
       </span>
-      <div style={{ fontSize: '0.85rem', color: 'var(--ink-faint)', letterSpacing: '0.1em', marginTop: '2rem', opacity: 0.6 }}>
-        클릭하여 타이머로 돌아가기
+      
+      <div style={{ display: 'flex', gap: '1rem', marginTop: '2.5rem' }}>
+        <button 
+          onClick={() => setShowSeconds(prev => !prev)}
+          style={{
+            background: 'none', border: '1px solid var(--rule)', borderRadius: '20px',
+            color: 'var(--ink-faint)', fontSize: '0.75rem', padding: '0.5rem 1.2rem',
+            cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.05em'
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--ink)'; e.currentTarget.style.borderColor = 'var(--ink-light)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--ink-faint)'; e.currentTarget.style.borderColor = 'var(--rule)'; }}
+        >
+          초 표시 {showSeconds ? '끄기' : '켜기'}
+        </button>
+        <button 
+          onClick={onClick}
+          style={{
+            background: 'none', border: '1px solid var(--rule)', borderRadius: '20px',
+            color: 'var(--ink-faint)', fontSize: '0.75rem', padding: '0.5rem 1.2rem',
+            cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.05em'
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--ink)'; e.currentTarget.style.borderColor = 'var(--ink-light)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--ink-faint)'; e.currentTarget.style.borderColor = 'var(--rule)'; }}
+        >
+          타이머로 돌아가기
+        </button>
       </div>
     </div>
   );
