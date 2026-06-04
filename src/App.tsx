@@ -76,11 +76,11 @@ function BigClockDisplay({ onClick }: { onClick: () => void }) {
         title="타이머로 돌아가기"
       >
         <span>{hh}</span>
-        <span style={{ opacity: showColon ? 1 : 0, transition: 'opacity 0.1s', margin: '0 -0.05em' }}>:</span>
+        <span style={{ opacity: (showSeconds || showColon) ? 1 : 0, transition: 'opacity 0.1s', margin: '0 -0.05em' }}>:</span>
         <span>{mm}</span>
         {showSeconds && (
           <>
-            <span style={{ opacity: showColon ? 1 : 0, transition: 'opacity 0.1s', margin: '0 -0.05em' }}>:</span>
+            <span style={{ opacity: 1, margin: '0 -0.05em' }}>:</span>
             <span>{ss}</span>
           </>
         )}
