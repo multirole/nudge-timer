@@ -33,7 +33,7 @@ export default function BreakModal({ onClose }: Props) {
   const setTargetMinutes = (mins: number) => {
     setStages([{
       id: String(Date.now()),
-      name: '\ud734\uc2dd',
+      name: '쉬는 시간',
       minutes: mins,
       messages: []
     }]);
@@ -76,20 +76,6 @@ export default function BreakModal({ onClose }: Props) {
         {/* Mode Toggle Tabs */}
         <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2.5rem', justifyContent: 'center' }}>
           <button 
-            onClick={() => setMode('DURATION')}
-            style={{ 
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: '0.65rem', letterSpacing: '0.1em',
-              color: mode === 'DURATION' ? 'var(--navy)' : 'var(--ink-faint)',
-              fontWeight: mode === 'DURATION' ? 600 : 400,
-              paddingBottom: '0.4rem',
-              borderBottom: mode === 'DURATION' ? '2px solid var(--navy)' : '2px solid transparent',
-              transition: 'all 0.2s'
-            }}
-          >
-            DURATION
-          </button>
-          <button 
             onClick={() => setMode('TARGET')}
             style={{ 
               background: 'none', border: 'none', cursor: 'pointer',
@@ -103,27 +89,24 @@ export default function BreakModal({ onClose }: Props) {
           >
             TARGET TIME
           </button>
+          <button 
+            onClick={() => setMode('DURATION')}
+            style={{ 
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: '0.65rem', letterSpacing: '0.1em',
+              color: mode === 'DURATION' ? 'var(--navy)' : 'var(--ink-faint)',
+              fontWeight: mode === 'DURATION' ? 600 : 400,
+              paddingBottom: '0.4rem',
+              borderBottom: mode === 'DURATION' ? '2px solid var(--navy)' : '2px solid transparent',
+              transition: 'all 0.2s'
+            }}
+          >
+            DURATION
+          </button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
-          {mode === 'DURATION' && (
-            <div>
-              <div style={{ fontSize: '0.55rem', color: 'var(--ink-faint)', letterSpacing: '0.15em', marginBottom: '1rem', textAlign: 'center' }}>
-                쉬는 시간 (분)
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-faint)', fontSize: '1rem', padding: '0.5rem', transition: 'color 0.2s' }} onClick={() => bumpDuration(1)} onMouseEnter={e => e.currentTarget.style.color = 'var(--ink)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--ink-faint)'}>▲</button>
-                  <div style={{ fontSize: '3.5rem', fontWeight: 200, width: '6rem', textAlign: 'center', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
-                    {durationMins}
-                  </div>
-                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-faint)', fontSize: '1rem', padding: '0.5rem', transition: 'color 0.2s' }} onClick={() => bumpDuration(-1)} onMouseEnter={e => e.currentTarget.style.color = 'var(--ink)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--ink-faint)'}>▼</button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {mode === 'TARGET' && (
             <div>
               <div style={{ fontSize: '0.55rem', color: 'var(--ink-faint)', letterSpacing: '0.15em', marginBottom: '1rem', textAlign: 'center' }}>
@@ -148,6 +131,23 @@ export default function BreakModal({ onClose }: Props) {
                     {String(mm).padStart(2, '0')}
                   </div>
                   <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-faint)', fontSize: '1rem', padding: '0.5rem', transition: 'color 0.2s' }} onClick={() => bumpMin(-1)} onMouseEnter={e => e.currentTarget.style.color = 'var(--ink)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--ink-faint)'}>▼</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mode === 'DURATION' && (
+            <div>
+              <div style={{ fontSize: '0.55rem', color: 'var(--ink-faint)', letterSpacing: '0.15em', marginBottom: '1rem', textAlign: 'center' }}>
+                쉬는 시간 (분)
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-faint)', fontSize: '1rem', padding: '0.5rem', transition: 'color 0.2s' }} onClick={() => bumpDuration(1)} onMouseEnter={e => e.currentTarget.style.color = 'var(--ink)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--ink-faint)'}>▲</button>
+                  <div style={{ fontSize: '3.5rem', fontWeight: 200, width: '6rem', textAlign: 'center', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
+                    {durationMins}
+                  </div>
+                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-faint)', fontSize: '1rem', padding: '0.5rem', transition: 'color 0.2s' }} onClick={() => bumpDuration(-1)} onMouseEnter={e => e.currentTarget.style.color = 'var(--ink)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--ink-faint)'}>▼</button>
                 </div>
               </div>
             </div>

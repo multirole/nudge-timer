@@ -11,7 +11,7 @@ export default function StageLabel() {
   const displayed = isNudgeMode ? getDisplayedTimeWithStages(stages, totalSeconds, elapsed, nudgeIntensity) : elapsed;
   const remaining = Math.max(0, totalSeconds - displayed);
   const percent = totalSeconds > 0 ? (displayed / totalSeconds) * 100 : 0;
-  const isBreak = stages.length === 1 && stages[0].name === '휴식';
+  const isBreak = stages.length === 1 && stages[0].name === '쉬는 시간';
   const isWarning = (remaining / 60 <= 1 || percent >= 95) && isRunning;
 
   // Determine current stage index
@@ -30,7 +30,7 @@ export default function StageLabel() {
   if (isFinished) idx = stages.length; // beyond last
 
   const prevStage = (idx > 0 && idx <= stages.length && !isBreak) ? stages[idx - 1] : null;
-  const currentStage = isFinished ? { name: isBreak ? '휴식' : '모든 활동 완료' } : stages[idx];
+  const currentStage = isFinished ? { name: isBreak ? '쉬는 시간' : '모든 활동 완료' } : stages[idx];
   const nextStage = idx < stages.length - 1 ? stages[idx + 1] : null;
 
   return (

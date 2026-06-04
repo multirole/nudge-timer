@@ -10,7 +10,7 @@ import StageLabel from './components/timer/StageLabel';
 import BreakModal from './components/modals/BreakModal';
 import { useTimerTick } from './hooks/useTimer';
 
-function CurrentClock() {
+function CurrentClock({ onClick }: { onClick?: () => void }) {
   const [time, setTime] = useState(() => {
     const d = new Date();
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -33,7 +33,8 @@ function CurrentClock() {
   }, []);
 
   return (
-    <span style={{
+    <span onClick={onClick} style={{
+      cursor: onClick ? 'pointer' : 'default',
       fontSize: '1.0rem',
       fontWeight: 400,
       letterSpacing: '0.18em',
@@ -46,8 +47,47 @@ function CurrentClock() {
   );
 }
 
+function BigClockDisplay({ onClick }: { onClick: () => void }) {
+  const [time, setTime] = useState(() => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  });
+
+  useEffect(() => {
+    const tick = () => {
+      const d = new Date();
+      setTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
+    };
+    const now = new Date();
+    const msUntilNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+    const timeout = setTimeout(() => {
+      tick();
+      const interval = setInterval(tick, 60000);
+      return () => clearInterval(interval);
+    }, msUntilNextMinute);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  return (
+    <div 
+      className="timer-display" 
+      onClick={onClick} 
+      style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, margin: '4rem 0' }}
+      title="타이머로 돌아가기"
+    >
+      <span className="timer-number" style={{ transition: 'all 0.3s' }}>
+        {time}
+      </span>
+      <div style={{ fontSize: '0.85rem', color: 'var(--ink-faint)', letterSpacing: '0.1em', marginTop: '2rem', opacity: 0.6 }}>
+        클릭하여 타이머로 돌아가기
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [showBreak, setShowBreak] = useState(false);
+  const [isClockMode, setIsClockMode] = useState(false);
   useTimerTick();
 
   return (
@@ -55,21 +95,23 @@ export default function App() {
       <div className="app-card">
         <Header />
 
-        {/* Stage label */}
-        <StageLabel />
-
-        {/* Big number */}
-        <BigTimerDisplay />
-
-        {/* Progress rule */}
-        <TimelineBar />
-
-        {/* Nudge message */}
-        <NudgeMessage />
-
-        {/* Controls */}
-        <TimerControls />
-        <TimeAdjustButtons />
+        {isClockMode ? (
+          <BigClockDisplay onClick={() => setIsClockMode(false)} />
+        ) : (
+          <>
+            {/* Stage label */}
+            <StageLabel />
+            {/* Big number */}
+            <BigTimerDisplay />
+            {/* Progress rule */}
+            <TimelineBar />
+            {/* Nudge message */}
+            <NudgeMessage />
+            {/* Controls */}
+            <TimerControls />
+            <TimeAdjustButtons />
+          </>
+        )}
 
         {/* Footer row inside card */}
         <div style={{
@@ -80,7 +122,7 @@ export default function App() {
           paddingTop: '1rem',
           borderTop: '1px solid var(--rule)',
         }}>
-          <CurrentClock />
+          <CurrentClock onClick={() => setIsClockMode(true)} />
           <button
             onClick={() => setShowBreak(true)}
             style={{
