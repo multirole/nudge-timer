@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Stage, Theme } from '../types';
-import { getDisplayedTimeWithStages } from '../lib/nudgeMath';
+import { getDisplayedTimeWithStages, getRealTimeWithStages } from '../lib/nudgeMath';
 import { playStageChime, playFinishSound } from '../lib/audio';
 import confetti from 'canvas-confetti';
 
@@ -164,7 +164,11 @@ export const useTimerStore = create<TimerState>((set) => ({
        newStages = newStages.map(s => ({ ...s, minutes: s.minutes * scale }));
     }
 
-    return { totalSeconds: newTotal, stages: newStages };
+    const newElapsed = state.isNudgeMode 
+      ? getRealTimeWithStages(newStages, newTotal, displayedTimeElapsed, state.nudgeIntensity)
+      : displayedTimeElapsed;
+
+    return { totalSeconds: newTotal, stages: newStages, elapsed: newElapsed };
   }),
 
   setTotalSeconds: (sec: number) => set({ totalSeconds: sec }),
