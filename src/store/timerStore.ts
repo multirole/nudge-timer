@@ -180,7 +180,18 @@ export const useTimerStore = create<TimerState>((set) => ({
 
   setTheme: (theme: Theme) => set({ theme }),
 
-  setNudgeMode: (isNudgeMode: boolean) => set({ isNudgeMode }),
+  setNudgeMode: (isNudgeMode: boolean) => set((state) => {
+    if (state.isNudgeMode === isNudgeMode) return {};
+
+    let newElapsed = state.elapsed;
+    if (state.isNudgeMode && !isNudgeMode) {
+      newElapsed = getDisplayedTimeWithStages(state.stages, state.totalSeconds, state.elapsed, state.nudgeIntensity);
+    } else if (!state.isNudgeMode && isNudgeMode) {
+      newElapsed = getRealTimeWithStages(state.stages, state.totalSeconds, state.elapsed, state.nudgeIntensity);
+    }
+
+    return { isNudgeMode, elapsed: newElapsed };
+  }),
 
   setNudgeIntensity: (nudgeIntensity: number) => set({ nudgeIntensity }),
 
